@@ -23,3 +23,4 @@ data/
 
 # Environment variables
 .env
+/data
