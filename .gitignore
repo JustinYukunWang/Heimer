@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Virtual environment
 myenv/
 venv/
@@ -23,4 +24,6 @@ data/
 
 # Environment variables
 .env
+=======
+>>>>>>> 6f0964c196454a75178d0772e2fb34aeae4a48fe
 /data
