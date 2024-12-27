@@ -1,7 +1,0 @@
-Match ID,Time Stamp(mins),Champion,Skills,Kills,Deaths,Assists,KDA,Level,Experience,Objectives Assisted,Gold Earned,Current Gold,CS,Jungle CS,Vision Score
-5188686476,5,Tahm Kench,"{<Key.Q: 'Q'>: 2, <Key.W: 'W'>: 1, <Key.E: 'E'>: 1}",0,1,1,1.0,5,1462,0,1421,71,18,0,25
-5188686476,10,Tahm Kench,"{<Key.Q: 'Q'>: 4, <Key.W: 'W'>: 1, <Key.E: 'E'>: 1, <Key.R: 'R'>: 1}",0,1,1,1.0,8,3923,0,2819,569,56,0,25
-5188686476,15,Tahm Kench,"{<Key.Q: 'Q'>: 5, <Key.W: 'W'>: 3, <Key.E: 'E'>: 1, <Key.R: 'R'>: 1}",1,1,2,3.0,11,6663,0,4993,393,102,0,25
-5188686476,20,Tahm Kench,"{<Key.Q: 'Q'>: 5, <Key.W: 'W'>: 5, <Key.E: 'E'>: 1, <Key.R: 'R'>: 2}",3,2,2,2.5,14,10044,1,7765,215,151,0,25
-5188686476,25,Tahm Kench,"{<Key.Q: 'Q'>: 5, <Key.W: 'W'>: 5, <Key.E: 'E'>: 2, <Key.R: 'R'>: 2}",3,3,2,1.6666666666666667,15,12563,2,9352,207,179,0,25
-5188686476,30,Tahm Kench,"{<Key.Q: 'Q'>: 5, <Key.W: 'W'>: 5, <Key.E: 'E'>: 3, <Key.R: 'R'>: 3}",3,3,9,4.0,17,15056,3,10721,491,191,0,25
