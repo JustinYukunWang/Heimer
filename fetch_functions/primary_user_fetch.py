@@ -6,7 +6,7 @@ import pandas as pd
 from collections import defaultdict
 import os
 
-cass.set_riot_api_key("RGAPI-c88daaab-100d-4fa6-8a4b-d0ee048d0737")
+cass.set_riot_api_key("RGAPI-17a738d9-a905-4101-a9b0-4e69e76bd377")
 
 def player_data_with_name(name: str, tagline: str, region: str, target_count: int):
     account = Account(name=name, tagline=tagline, region=region)
@@ -278,6 +278,8 @@ def save_to_spreadsheet(data, path, filename):
     # Save the DataFrame to a CSV file
     df.to_csv(filepath, index=False)
     print(f"Data saved to {filename} successfully!")
+
+
 
 if __name__ == "__main__":
     data = player_data_with_name("The Serendipity", "NA1", "NA", 40)
