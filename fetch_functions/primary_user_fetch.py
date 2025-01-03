@@ -5,8 +5,11 @@ from cassiopeia.data import Queue
 import pandas as pd
 from collections import defaultdict
 import os
+from dotenv import load_dotenv
+load_dotenv()
+KEY = os.getenv('API_KEY')
 
-cass.set_riot_api_key("RGAPI-17a738d9-a905-4101-a9b0-4e69e76bd377")
+cass.set_riot_api_key(KEY)
 
 cass.apply_settings({
     "caching": {
