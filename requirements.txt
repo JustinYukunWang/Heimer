@@ -153,7 +153,7 @@ python-dotenv==1.0.1
 python-slugify==8.0.4
 python-socks==2.6.1
 pytz==2024.2
-pywin32==308
+pywin32==308; platform_system == "Windows"
 PyYAML==6.0.2
 pyzmq==26.2.0
 readchar==4.2.1

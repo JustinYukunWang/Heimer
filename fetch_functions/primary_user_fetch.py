@@ -8,6 +8,13 @@ import os
 
 cass.set_riot_api_key("RGAPI-17a738d9-a905-4101-a9b0-4e69e76bd377")
 
+cass.apply_settings({
+    "caching": {
+        "enabled": True,
+        "cache_expiry": 3600  # Cache data for 1 hour
+    }
+})
+
 def player_data_with_name(name: str, tagline: str, region: str, target_count: int):
     account = Account(name=name, tagline=tagline, region=region)
     summoner = account.summoner
