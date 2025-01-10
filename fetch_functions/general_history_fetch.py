@@ -1,5 +1,6 @@
 import cassiopeia as cass
 import os
+import request
 
 from dotenv import load_dotenv
 load_dotenv()
