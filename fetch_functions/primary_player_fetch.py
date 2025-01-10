@@ -18,7 +18,7 @@ cass.apply_settings({
     }
 })
 
-def player_data_with_name(name: str, tagline: str, region: str, target_count: int):
+def in_game_data_IDfiltered(name: str, tagline: str, region: str, target_count: int):
     account = Account(name=name, tagline=tagline, region=region)
     summoner = account.summoner
     match_history = cass.get_match_history(
@@ -87,7 +87,7 @@ def player_data_with_name(name: str, tagline: str, region: str, target_count: in
     print(f"Finished processing {matches_fetched} matches. Some timestamps may have fewer than {target_count} entries.")
     return data
 
-def player_data_with_account(account, target_count: int):
+def in_game_data_AccountFiltered(account, target_count: int):
     summoner = account.summoner
     match_history = cass.get_match_history(
         continent=summoner.region.continent,
@@ -156,7 +156,7 @@ def player_data_with_account(account, target_count: int):
     print(f"Finished processing {matches_fetched} matches. Some timestamps may have fewer than {target_count} entries.")
     return data
 
-def player_data_with_name_filter_champ(name: str, tagline: str, region: str, target_count: int, champName: str):
+def in_game_data_IDfilter_champ(name: str, tagline: str, region: str, target_count: int, champName: str):
     account = Account(name=name, tagline=tagline, region=region)
     summoner = account.summoner
     match_history = cass.get_match_history(
@@ -225,7 +225,7 @@ def player_data_with_name_filter_champ(name: str, tagline: str, region: str, tar
     print(f"Finished processing {matches_fetched} matches. Some timestamps may have fewer than {target_count} entries.")
     return data
 
-def player_endGame_data_with_name_filter_champ(name: str, tagline: str, region: str, target_count: int, champName: str):
+def endGame_data_IDfiltered_champ(name: str, tagline: str, region: str, target_count: int, champName: str):
     account = Account(name=name, tagline=tagline, region=region)
     summoner = account.summoner
     match_history = cass.get_match_history(
@@ -292,5 +292,5 @@ def save_to_spreadsheet(data, path, filename):
 
 
 if __name__ == "__main__":
-    data = player_data_with_name("The Serendipity", "NA1", "NA", 40)
+    data = in_game_data_IDfiltered("The Serendipity", "NA1", "NA", 40)
     save_to_spreadsheet(data, r"C:\Users\IKUN\Desktop\League Project\data", "player_data.csv")
