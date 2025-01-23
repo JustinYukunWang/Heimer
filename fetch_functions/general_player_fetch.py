@@ -68,7 +68,7 @@ def Higher_Rank_Id_filter(data: dict):
     return df
 
 def get_ranked_entries(region: str, tier: str, division: str):
-    url = f'https://{region}.api.riotgdames.com/lol/league/v4/entries/RANKED_SOLO_5x5/{tier}/{division}?page=1&api_key={KEY}'
+    url = f'https://{region}.api.riotgames.com/lol/league/v4/entries/RANKED_SOLO_5x5/{tier}/{division}?page=1&api_key={KEY}'
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()
