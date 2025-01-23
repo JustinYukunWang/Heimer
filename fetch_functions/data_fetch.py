@@ -9,3 +9,5 @@ async def get_DiamondI():
     diamondI = g_fetch.get_ranked_entries('na1', 'DIAMOND', 'I')
     diamondI_list = g_fetch.filter_player_id(diamondI)
     return diamondI_list
+
+
