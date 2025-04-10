@@ -4,10 +4,10 @@ import requests
 import os
 import sys
 import time
+import logging
 from dotenv import load_dotenv
 
-sys.path.append(os.path.abspath("../fetch_functions"))
-import primary_player_fetch as p_fetch
+from backend.fetch_functions import primary_player_fetch as p_fetch
 
 load_dotenv()
 KEY = os.getenv('API_KEY')
@@ -67,15 +67,34 @@ def Higher_Rank_Id_filter(data: dict):
         df.append(entry)
     return df
 
-def get_ranked_entries(region: str, tier: str, division: str):
+def get_ranked_entries(region: str, tier: str, division: str, retries=3, delay=5):
     url = f'https://{region}.api.riotgames.com/lol/league/v4/entries/RANKED_SOLO_5x5/{tier}/{division}?page=1&api_key={KEY}'
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Error when fetching, error code: {response.status_code}")
-        return None
-    
+
+    for attempt in range(retries):
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            return response.json()
+
+        elif response.status_code == 429:
+            retry_after = int(response.headers.get('Retry-After', delay))
+            logging.warning(f"[Rate Limited] Retrying in {retry_after} seconds...")
+            time.sleep(retry_after)
+
+        elif response.status_code in [403, 401]:
+            logging.error(f"[Authentication Error {response.status_code}] Check your API key or permissions.")
+            break
+
+        else:
+            logging.error(f"[HTTP {response.status_code}] Failed to fetch data: {response.text}")
+
+        if attempt < retries - 1:
+            logging.info(f"[Retry {attempt+1}/{retries}] Retrying in {delay} seconds...")
+            time.sleep(delay)
+
+    return None
+
+
 def get_challenger_league():
     url = f"https://na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5?api_key={KEY}"
     response = requests.get(url)
