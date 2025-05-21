@@ -95,15 +95,12 @@ def extract_timeline_data(match_id, region=None):
         for i, participant in enumerate(participants):
             participant_id = i + 1  # Participant IDs are 1-based
 
-            # Get summoner name with tagline in the format name#tagline
-            game_name = participant.get('riotIdGameName', participant.get('summonerName', ''))
-            tagline = participant.get('riotIdTagline', '')
-
-            # Format as name#tagline if tagline exists
-            if game_name and tagline:
-                summoner_name = f"{game_name}#{tagline}"
-            else:
-                summoner_name = game_name
+            # Get summoner name - try different fields that might contain it
+            summoner_name = participant.get('summonerName', '')
+            if not summoner_name:
+                summoner_name = participant.get('riotIdGameName', '')
+            if not summoner_name and participant.get('riotIdTagline'):
+                summoner_name = f"{participant.get('riotIdGameName', '')}#{participant.get('riotIdTagline', '')}"
 
             puuid = participant.get('puuid', '')
             champion_name = participant.get('championName', '')
