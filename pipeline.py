@@ -27,7 +27,7 @@ from db.client import (
     upsert_participants,
     upsert_snapshots,
 )
-from fetch_functions.timeline_fetch import extract_snapshots
+from backend.fetch_functions.timeline_fetch import extract_snapshots
 
 load_dotenv()
 KEY = os.getenv("API_KEY")

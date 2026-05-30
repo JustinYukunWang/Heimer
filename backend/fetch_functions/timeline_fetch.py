@@ -52,7 +52,7 @@ def extract_snapshots(timeline: dict, match_id: str) -> list[dict]:
     metadata = timeline.get("metadata", {})
     info = timeline.get("info", {})
 
-    puuids = metadata.get("participants", [])  # index 0 → participantId 1
+    puuids = metadata.get("participants", [])
     frames = info.get("frames", [])
 
     if not frames or not puuids:
@@ -60,26 +60,21 @@ def extract_snapshots(timeline: dict, match_id: str) -> list[dict]:
 
     num = len(puuids)
 
-    # Map minute → frame. Riot frames arrive at ~60 000 ms intervals.
-    # round() handles the rare sub-second drift (e.g. 299 998 ms → 5 min).
     minute_to_frame: dict[int, dict] = {}
     for frame in frames:
         minute = round(frame["timestamp"] / 60000)
         minute_to_frame[minute] = frame
 
-    # Flatten and sort all events once so we can scan them in a single pass.
     all_events = sorted(
         (e for frame in frames for e in frame.get("events", [])),
         key=lambda e: e["timestamp"],
     )
 
-    # Running state per participant (index = participantId - 1)
     kills   = [0] * num
     deaths  = [0] * num
     assists = [0] * num
     items: list[list[int]] = [[] for _ in range(num)]
 
-    # Snapshots of KDA + items captured at each desired minute
     kda_at: dict[int, list[tuple[int, int, int]]] = {}
     items_at: dict[int, list[list[int]]] = {}
 
@@ -118,8 +113,6 @@ def extract_snapshots(timeline: dict, match_id: str) -> list[dict]:
                     items[pid - 1].remove(item_id)
 
             elif etype == "ITEM_UNDO":
-                # beforeId = item being reversed out of inventory
-                # afterId  = item being restored (0 when undoing a purchase)
                 pid = event.get("participantId", 0)
                 before = event.get("beforeId", 0)
                 after = event.get("afterId", 0)
@@ -138,7 +131,7 @@ def extract_snapshots(timeline: dict, match_id: str) -> list[dict]:
     for minute in SNAPSHOT_MINUTES:
         frame = minute_to_frame.get(minute)
         if not frame:
-            continue  # game ended before this timestamp
+            continue
 
         p_frames = frame.get("participantFrames", {})
 
@@ -159,7 +152,6 @@ def extract_snapshots(timeline: dict, match_id: str) -> list[dict]:
                 "kills":            k,
                 "deaths":           d,
                 "assists":          a,
-                # vision_score is an end-game stat only; set it from match data
                 "vision_score":     None,
                 "items":            items_at.get(minute, [[]] * num)[idx],
             })
