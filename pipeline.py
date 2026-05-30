@@ -15,12 +15,16 @@ import aiohttp
 import os
 import sys
 from datetime import datetime, timezone
+from sqlalchemy import text
 
 from dotenv import load_dotenv
 
 sys.path.insert(0, os.path.dirname(__file__))
 from db.client import (
     get_session,
+    clear_all_tables,
+    get_known_patches,
+    upsert_item_catalog,
     ensure_players_exist,
     upsert_players,
     upsert_match,
@@ -215,12 +219,60 @@ async def process_player(
 
 
 # ---------------------------------------------------------------------------
+# DDragon item catalog sync
+# ---------------------------------------------------------------------------
+
+async def fetch_ddragon_versions(http: aiohttp.ClientSession) -> list[str]:
+    url = "https://ddragon.leagueoflegends.com/api/versions.json"
+    async with http.get(url) as r:
+        return await r.json() if r.status == 200 else []
+
+
+async def sync_patch_items(http: aiohttp.ClientSession, patch: str, all_versions: list[str]):
+    """Fetch all items from DDragon for a given patch and store them in item_catalog."""
+    # DDragon uses full version strings like "14.23.1"; our patch is "14.23"
+    full_version = next((v for v in all_versions if v.startswith(patch + ".")), None)
+    if not full_version:
+        print(f"  No DDragon version found for patch {patch} — skipping")
+        return
+
+    url = f"https://ddragon.leagueoflegends.com/cdn/{full_version}/data/en_US/item.json"
+    async with http.get(url) as r:
+        if r.status != 200:
+            print(f"  DDragon request failed ({r.status}) for patch {patch}")
+            return
+        data = await r.json()
+
+    items = [
+        {
+            "item_id":     int(item_id),
+            "patch":       patch,
+            "name":        item.get("name"),
+            "description": item.get("plaintext") or item.get("description", ""),
+            "tags":        item.get("tags", []),
+            "stats":       item.get("stats", {}),
+        }
+        for item_id, item in data.get("data", {}).items()
+    ]
+
+    async with get_session() as db:
+        await upsert_item_catalog(db, items)
+
+    print(f"  Synced {len(items)} items for patch {patch} (DDragon {full_version})")
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
 async def main():
     processed: set[str] = set()
     stats = {"matches": 0, "snapshots": 0, "skipped": 0}
+
+    print("Clearing existing data for fresh run...")
+    async with get_session() as db:
+        await clear_all_tables(db)
+    print("Tables cleared.\n")
 
     async with aiohttp.ClientSession() as http:
 
@@ -251,6 +303,23 @@ async def main():
                 break
             print(f"  [{i}/{total_players}] {tier}")
             await process_player(http, entry, tier, processed, stats)
+
+        # Sync item catalog for any patches we haven't seen before.
+        # Runs after match collection so we know exactly which patches are in the DB.
+        print(f"\n{'='*50}")
+        print("Syncing item catalog...")
+        ddragon_versions = await fetch_ddragon_versions(http)
+        async with get_session() as db:
+            known_patches = await get_known_patches(db)
+        async with get_session() as db:
+            result = await db.execute(text("SELECT DISTINCT patch FROM matches WHERE patch IS NOT NULL"))
+            seen_patches = {row[0] for row in result.fetchall()}
+        new_patches = seen_patches - known_patches
+        if new_patches:
+            for patch in sorted(new_patches):
+                await sync_patch_items(http, patch, ddragon_versions)
+        else:
+            print("  Item catalog already up to date.")
 
     print(f"\n{'='*50}")
     print(f"Pipeline complete.")

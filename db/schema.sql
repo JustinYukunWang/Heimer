@@ -41,3 +41,16 @@ CREATE TABLE IF NOT EXISTS timeline_snapshots (
     items            JSONB,
     UNIQUE (match_id, puuid, timestamp_minute)
 );
+
+-- Persistent item lookup table — never cleared between pipeline runs.
+-- Keyed by (item_id, patch) so data stays correct across game updates.
+-- Populated automatically from DDragon whenever a new patch is encountered.
+CREATE TABLE IF NOT EXISTS item_catalog (
+    item_id     INTEGER NOT NULL,
+    patch       TEXT    NOT NULL,
+    name        TEXT,
+    description TEXT,
+    tags        JSONB,
+    stats       JSONB,
+    PRIMARY KEY (item_id, patch)
+);

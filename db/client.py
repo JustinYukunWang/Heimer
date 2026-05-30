@@ -31,6 +31,40 @@ async def get_session():
             raise
 
 
+async def clear_all_tables(session: AsyncSession):
+    """Truncate match data at the start of each run so data stays current.
+    item_catalog is intentionally excluded — patch item data never changes.
+    """
+    await session.execute(text(
+        "TRUNCATE timeline_snapshots, participants, matches, players RESTART IDENTITY CASCADE"
+    ))
+
+
+async def get_known_patches(session: AsyncSession) -> set[str]:
+    """Return all patch versions already present in item_catalog."""
+    result = await session.execute(text("SELECT DISTINCT patch FROM item_catalog"))
+    return {row[0] for row in result.fetchall()}
+
+
+async def upsert_item_catalog(session: AsyncSession, items: list[dict]):
+    """Bulk-insert item definitions for a patch, skipping duplicates."""
+    if not items:
+        return
+    for item in items:
+        if isinstance(item.get("tags"), list):
+            item["tags"] = json.dumps(item["tags"])
+        if isinstance(item.get("stats"), dict):
+            item["stats"] = json.dumps(item["stats"])
+    await session.execute(
+        text("""
+            INSERT INTO item_catalog (item_id, patch, name, description, tags, stats)
+            VALUES (:item_id, :patch, :name, :description, :tags, :stats)
+            ON CONFLICT (item_id, patch) DO NOTHING
+        """),
+        items,
+    )
+
+
 async def ensure_players_exist(session: AsyncSession, puuids: list[str]):
     """Register PUUIDs that appeared as match participants but aren't tracked players.
     Uses DO NOTHING so it never overwrites rank/lp data for players we already know.
