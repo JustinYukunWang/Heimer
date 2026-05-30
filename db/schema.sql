@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS timeline_snapshots (
     cs               INTEGER,
     gold             INTEGER,
     xp               INTEGER,
+    level            INTEGER,
     kills            INTEGER,
     deaths           INTEGER,
     assists          INTEGER,

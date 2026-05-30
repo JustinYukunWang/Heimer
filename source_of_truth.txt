@@ -268,81 +268,115 @@ At least:
 
 ---
 
-# MVP 2: Player Scanner
+# MVP 2: Player Scanner + Benchmark Comparison
 
 ## Goal
 
-Scan any Riot account.
+Scan any Riot account and compare their performance against Master+ benchmark data.
+Ranked Solo/Duo only.
 
 ### User Flow
 
 User enters:
 
 ```text
-Game Name + Tag
+Game Name + Tag (e.g. TheKun#Wang)
 ```
 
 System:
 
-1. Fetches recent games
-2. Calculates averages
-3. Generates profile
+1. Fetches profile (icon, ID, tag, current rank, LP)
+2. Fetches last 20 ranked games
+3. Displays full profile and match history
+4. User can filter by role and/or champion
+5. After filtering: shows aggregated stats + per-minute breakdown vs Master+ benchmark
 
-### Metrics
+---
+
+### Section 1: Player Profile Header
+
+- Profile picture — fetched on-demand from DDragon using profileIconId returned
+  by the Riot summoner API. URL pattern:
+  ddragon.leagueoflegends.com/cdn/{version}/img/profileicon/{iconId}.png
+  Not stored in DB.
+- Game Name + Tag
+- Current rank + LP
+- Winrate (overall, ranked)
+- Most played role
+
+---
+
+### Section 2: Match History (last 20 ranked games)
+
+Per game:
+
+- Champion played
+- Role
+- KDA
+- CS
+- Gold
+- Win/Loss
+- Game duration
+- Items at end of game
+
+---
+
+### Section 3: Champion Pool
+
+- Most played champions (by game count)
+- Winrate per champion
+- Average KDA per champion
+
+---
+
+### Section 4: Filtered Analysis (role and/or champion filter)
+
+User selects a role (e.g. TOP) and/or champion (e.g. Aatrox).
+
+Displays overall averages across filtered games:
 
 - Winrate
 - KDA
 - CS/min
 - Gold/min
-- Vision/min
-- Champion Pool
-
-### Success Criteria
-
-Produces an OP.GG-style profile.
+- Total vision score (average per game — not per minute, Riot API limitation)
+- Total damage dealt to champions (average per game — not per minute)
 
 ---
 
-# MVP 3: Benchmark Comparison
+### Section 5: Per-Minute Stats (Star Feature)
 
-## Goal
+At each timestamp (5, 10, 15, 20, 25, 30 minutes), show the player's average
+stats from their filtered games side-by-side against Master+ benchmark for the
+same role and/or champion.
 
-Compare user against Master+ players.
-
-### Example
-
-User:
+Example:
 
 ```text
-Aatrox
-CS@10 = 58
+10 Minutes — Top Lane Aatrox
+
+             You        Master+    Diff
+CS           58         72         -14
+Gold         3,200      3,850      -650
+Level        5          6          -1
+KDA          1/1/0      1.2/0.8/1  —
+XP           4,100      4,600      -500
 ```
 
-Benchmark:
-
-```text
-Master+
-CS@10 = 72
-```
-
-Result:
-
-```text
--14 CS difference
-```
-
-### Metrics
-
-- CS
-- Gold
-- XP
-- Vision
-- Deaths
-- Objective Participation
+Notes:
+- Vision score and damage are NOT shown per minute (not available in Riot
+  timeline API). Shown as overall game averages in Section 4 instead.
+- Level is kept alongside XP — level differences are more intuitive for
+  players (power spikes at 6/9/11/16) while XP shows the raw gap.
+- User's per-minute stats fetched on-demand via Riot Match v5 Timeline API.
+- Benchmark stats queried from timeline_snapshots in Neon filtered by
+  role and/or champion, rank IN (CHALLENGER, GRANDMASTER, MASTER).
 
 ### Success Criteria
 
-Shows strengths and weaknesses.
+- Produces a full OP.GG-style profile
+- Shows per-minute stat gaps vs Master+ benchmark
+- Filter works across champion and role combinations
 
 ---
 

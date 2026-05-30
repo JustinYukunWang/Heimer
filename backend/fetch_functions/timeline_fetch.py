@@ -149,6 +149,7 @@ def extract_snapshots(timeline: dict, match_id: str) -> list[dict]:
                 "cs":               p_frame.get("minionsKilled", 0),
                 "gold":             p_frame.get("totalGold", 0),
                 "xp":               p_frame.get("xp", 0),
+                "level":            p_frame.get("level", 0),
                 "kills":            k,
                 "deaths":           d,
                 "assists":          a,

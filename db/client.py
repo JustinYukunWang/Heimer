@@ -137,10 +137,10 @@ async def upsert_snapshots(session: AsyncSession, snapshots: list[dict]):
     await session.execute(
         text("""
             INSERT INTO timeline_snapshots
-                (match_id, puuid, timestamp_minute, cs, gold, xp,
+                (match_id, puuid, timestamp_minute, cs, gold, xp, level,
                  kills, deaths, assists, vision_score, items)
             VALUES
-                (:match_id, :puuid, :timestamp_minute, :cs, :gold, :xp,
+                (:match_id, :puuid, :timestamp_minute, :cs, :gold, :xp, :level,
                  :kills, :deaths, :assists, :vision_score, :items)
             ON CONFLICT (match_id, puuid, timestamp_minute) DO NOTHING
         """),
