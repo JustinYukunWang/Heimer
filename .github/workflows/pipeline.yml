@@ -1,0 +1,28 @@
+name: Benchmark Data Pipeline
+
+on:
+  schedule:
+    - cron: "0 8 * * *"   # Every day at 8am UTC (3am EST / midnight PST)
+  workflow_dispatch:        # Also allows manual trigger from GitHub UI
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-pipeline.txt
+
+      - name: Run pipeline
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python pipeline.py

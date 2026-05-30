@@ -1,0 +1,579 @@
+# Heimer: AI-Powered League of Legends Coach
+
+## Vision
+
+Heimer is an AI-powered coaching platform for League of Legends players.
+
+Unlike traditional stat websites such as OP.GG, U.GG, or Mobalytics, Heimer aims to provide personalized coaching recommendations based on comparisons against high-ranked players and the user's own historical performance.
+
+The long-term goal is to create a desktop application with:
+
+- Player profile analysis
+- Historical trend analysis
+- Champion-specific coaching
+- Benchmarking against Master+ players
+- Post-game reviews
+- Live in-game performance tracking
+- AI-generated coaching recommendations
+
+---
+
+# Core Product Philosophy
+
+Most League tools answer:
+
+> "What happened?"
+
+Heimer answers:
+
+> "Why did it happen, and what should I improve next?"
+
+Example:
+
+Instead of:
+
+> Vision Score: 30
+
+Heimer says:
+
+> Your average Vision Score at 30 minutes is 30.
+> Master+ players on Aatrox average 42.
+> This suggests insufficient vision setup before objective fights.
+> Focus on establishing river vision 60–90 seconds before Dragon and Baron spawns.
+
+---
+
+# Target Users
+
+## Primary
+
+Competitive ranked players
+
+Ranks:
+
+- Silver
+- Gold
+- Platinum
+- Emerald
+- Diamond
+
+These players actively seek improvement.
+
+---
+
+## Secondary
+
+High-ranked players seeking deeper analytics.
+
+Ranks:
+
+- Master
+- Grandmaster
+- Challenger
+
+---
+
+# High-Level Architecture
+
+```text
+                    Riot API
+                        |
+                        |
+                 Data Collection
+                        |
+                        |
+                 Cloud Database
+                        |
+         --------------------------------
+         |                              |
+         |                              |
+  Analytics Engine               AI Coach Engine
+         |                              |
+         --------------------------------
+                        |
+                 Desktop Application
+                        |
+          ----------------------------
+          |                          |
+          |                          |
+    Profile Analysis          Live Overlay
+```
+
+---
+
+# Data Collection Layer
+
+## Purpose
+
+Build a large benchmark dataset from high-ranked players.
+
+Current rank targets:
+
+- Diamond I
+- Master
+- Grandmaster
+- Challenger
+
+Current implementation already exists.
+
+---
+
+## Data to Collect
+
+### Player Information
+
+- PUUID
+- Rank
+- LP
+- Region
+
+### Match Information
+
+- Match ID
+- Game Duration
+- Queue Type
+- Patch Version
+- Win/Loss
+
+### Champion Information
+
+- Champion
+- Role
+- Summoner Spells
+- Runes
+
+### Timeline Snapshots
+
+Store snapshots at:
+
+- 5 minutes
+- 10 minutes
+- 15 minutes
+- 20 minutes
+- 25 minutes
+- 30 minutes
+
+Metrics:
+
+- Kills
+- Deaths
+- Assists
+- Gold
+- CS
+- Jungle CS
+- Experience
+- Level
+- Items
+- Vision Score
+- Objectives
+- Damage
+
+---
+
+# Database Design
+
+## Players
+
+```text
+players
+```
+
+Columns:
+
+- puuid
+- rank
+- lp
+- region
+
+---
+
+## Matches
+
+```text
+matches
+```
+
+Columns:
+
+- match_id
+- patch
+- duration
+- queue
+- timestamp
+
+---
+
+## Participants
+
+```text
+participants
+```
+
+Columns:
+
+- match_id
+- puuid
+- champion
+- role
+- win
+
+---
+
+## Timeline Snapshots
+
+```text
+timeline_snapshots
+```
+
+Columns:
+
+- match_id
+- puuid
+- timestamp_minute
+- cs
+- gold
+- xp
+- kills
+- deaths
+- assists
+- vision_score
+- items
+
+---
+
+# MVP Roadmap
+
+---
+
+# MVP 1: Benchmark Dataset
+
+## Goal
+
+Create a large benchmark dataset of high-ranked players.
+
+### Deliverables
+
+- Riot API data collection
+- Automated fetching
+- Cloud database storage
+- Historical match storage
+
+### Success Criteria
+
+At least:
+
+- 100,000 matches
+- Master+
+- Timeline snapshots
+
+---
+
+# MVP 2: Player Scanner
+
+## Goal
+
+Scan any Riot account.
+
+### User Flow
+
+User enters:
+
+```text
+Game Name + Tag
+```
+
+System:
+
+1. Fetches recent games
+2. Calculates averages
+3. Generates profile
+
+### Metrics
+
+- Winrate
+- KDA
+- CS/min
+- Gold/min
+- Vision/min
+- Champion Pool
+
+### Success Criteria
+
+Produces an OP.GG-style profile.
+
+---
+
+# MVP 3: Benchmark Comparison
+
+## Goal
+
+Compare user against Master+ players.
+
+### Example
+
+User:
+
+```text
+Aatrox
+CS@10 = 58
+```
+
+Benchmark:
+
+```text
+Master+
+CS@10 = 72
+```
+
+Result:
+
+```text
+-14 CS difference
+```
+
+### Metrics
+
+- CS
+- Gold
+- XP
+- Vision
+- Deaths
+- Objective Participation
+
+### Success Criteria
+
+Shows strengths and weaknesses.
+
+---
+
+# MVP 4: Rule-Based Coaching Engine
+
+## Goal
+
+Generate coaching recommendations.
+
+### Example Rule
+
+```text
+If CS@10 < benchmark by 15%
+```
+
+Output:
+
+```text
+Your laning farm is below benchmark.
+Focus on improving last-hitting consistency.
+```
+
+### Success Criteria
+
+Top 3 improvement suggestions.
+
+---
+
+# MVP 5: AI Coach
+
+## Goal
+
+Turn statistical findings into natural language coaching.
+
+### Input
+
+Structured metrics:
+
+```json
+{
+  "champion": "Aatrox",
+  "cs10": 58,
+  "benchmark_cs10": 72
+}
+```
+
+### Output
+
+```text
+Your laning phase is currently your biggest weakness.
+Master-level Aatrox players average 72 CS by 10 minutes, while you average 58.
+Improving your farming efficiency could significantly increase your gold income and carry potential.
+```
+
+### Success Criteria
+
+Readable coaching reports.
+
+---
+
+# MVP 6: Desktop Application
+
+## Goal
+
+Create user-facing software.
+
+### Features
+
+- Search player
+- Coaching dashboard
+- Match history
+- Champion analysis
+
+### Suggested Stack
+
+Frontend:
+
+- React
+- Tauri
+
+Backend:
+
+- FastAPI
+
+Database:
+
+- PostgreSQL
+
+Hosting:
+
+- Railway
+- Render
+- Supabase
+
+---
+
+# MVP 7: Post-Game Reviews
+
+## Goal
+
+Analyze every completed game.
+
+### User Flow
+
+Game Ends
+
+↓
+
+Fetch Match
+
+↓
+
+Compare Against Benchmark
+
+↓
+
+Generate Report
+
+### Example Output
+
+```text
+Victory
+
+Strengths:
+- Excellent CS
+- Strong objective control
+
+Weaknesses:
+- Low vision score
+- Died before objectives twice
+
+Focus Next Game:
+- Place control wards before Dragon fights.
+```
+
+---
+
+# MVP 8: Live Game Tracking
+
+## Goal
+
+Track player performance during a game.
+
+### Data Source
+
+League Live Client API
+
+```text
+127.0.0.1:2999
+```
+
+### Metrics
+
+- Current CS
+- Gold
+- KDA
+- Vision
+- Objective Timers
+
+### Success Criteria
+
+Real-time dashboard.
+
+---
+
+# MVP 9: In-Game Overlay
+
+## Goal
+
+Display coaching insights while playing.
+
+### Examples
+
+```text
+10 Minutes
+
+CS: 61
+
+Master+ Benchmark: 72
+
+You are 11 CS behind benchmark.
+```
+
+```text
+Dragon spawning in 90 seconds.
+
+Consider recalling and purchasing vision.
+```
+
+### Notes
+
+Must comply with Riot's Third Party Developer Policies.
+
+---
+
+# Future Vision
+
+Long-term, Heimer becomes:
+
+> "ChatGPT for League of Legends improvement."
+
+A player should be able to ask:
+
+"Why am I hard stuck Emerald?"
+
+and receive a data-driven answer based on:
+
+- Thousands of their games
+- Millions of benchmark data points
+- Champion-specific comparisons
+- Patch-specific trends
+
+The system should identify:
+
+- Mechanical weaknesses
+- Macro weaknesses
+- Champion pool issues
+- Vision habits
+- Objective control issues
+- Snowball conversion issues
+
+and produce actionable coaching recommendations.
+
+---
+
+# Technical North Star
+
+For every recommendation generated by Heimer:
+
+1. It must be backed by data.
+2. It must be benchmarked against stronger players.
+3. It must be actionable.
+4. It must be personalized.
+5. It must explain why the recommendation matters.
