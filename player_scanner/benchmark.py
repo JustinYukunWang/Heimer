@@ -6,13 +6,22 @@ from db.client import get_session
 from sqlalchemy import text
 
 
-async def get_benchmark(role: str | None = None, champion: str | None = None) -> dict[int, dict]:
+_VALID_RANKS = frozenset({'CHALLENGER', 'GRANDMASTER', 'MASTER'})
+
+
+async def get_benchmark(
+    role: str | None = None,
+    champion: str | None = None,
+    ranks: list[str] | None = None,
+) -> dict[int, dict]:
     """
-    Query Neon for Master+/GM/Challenger average per-minute stats.
-    Returns dict keyed by timestamp_minute → {cs, gold, xp, level, kills, deaths, assists}.
-    Optionally filtered by role and/or champion.
+    Query Neon for per-minute averages filtered by rank tier, role, and/or champion.
+    ranks defaults to all three tiers; pass a subset to compare against e.g. Challenger only.
     """
-    conditions = ["pl.rank IN ('CHALLENGER', 'GRANDMASTER', 'MASTER')"]
+    selected = [r for r in (ranks or _VALID_RANKS) if r in _VALID_RANKS] or list(_VALID_RANKS)
+    # Values are validated against a whitelist — safe to interpolate
+    rank_sql = ', '.join(f"'{r}'" for r in selected)
+    conditions = [f"pl.rank IN ({rank_sql})"]
     params: dict = {}
 
     if role:

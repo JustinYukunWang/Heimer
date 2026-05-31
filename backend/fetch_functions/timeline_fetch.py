@@ -39,15 +39,15 @@ def fetch_timeline(match_id: str, platform: str) -> dict | None:
     return _get(url)
 
 
-def extract_snapshots(timeline: dict, match_id: str) -> list[dict]:
+def extract_snapshots(
+    timeline: dict,
+    match_id: str,
+    minutes: set[int] | None = None,
+) -> list[dict]:
     """
-    Extract per-minute snapshots at each SNAPSHOT_MINUTES mark for every participant.
-
-    Bypasses cassiopeia entirely — reads participant frames directly from the raw
-    Riot timeline response and reconstructs KDA + items from the event log.
-
-    Returns a flat list of snapshot dicts (one per player per timestamp),
-    ready to pass straight to db.client.upsert_snapshots().
+    Extract per-minute snapshots for every participant.
+    minutes defaults to SNAPSHOT_MINUTES (5-min intervals for the benchmark pipeline).
+    Pass set(range(1, 41)) from the player scanner to capture every minute.
     """
     metadata = timeline.get("metadata", {})
     info = timeline.get("info", {})
@@ -58,6 +58,7 @@ def extract_snapshots(timeline: dict, match_id: str) -> list[dict]:
     if not frames or not puuids:
         return []
 
+    snapshot_minutes = minutes if minutes is not None else SNAPSHOT_MINUTES
     num = len(puuids)
 
     minute_to_frame: dict[int, dict] = {}
@@ -79,7 +80,7 @@ def extract_snapshots(timeline: dict, match_id: str) -> list[dict]:
     items_at: dict[int, list[list[int]]] = {}
 
     event_idx = 0
-    for minute in sorted(SNAPSHOT_MINUTES):
+    for minute in sorted(snapshot_minutes):
         cutoff_ms = minute * 60 * 1000
 
         while event_idx < len(all_events):
@@ -128,7 +129,7 @@ def extract_snapshots(timeline: dict, match_id: str) -> list[dict]:
         items_at[minute] = [list(items[i]) for i in range(num)]
 
     snapshots = []
-    for minute in SNAPSHOT_MINUTES:
+    for minute in snapshot_minutes:
         frame = minute_to_frame.get(minute)
         if not frame:
             continue

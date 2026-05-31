@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from backend.fetch_functions.timeline_fetch import extract_snapshots
+
+_EVERY_MINUTE = set(range(1, 41))   # 1–40 min for on-demand player analysis
 from player_scanner.benchmark import get_benchmark
 
 load_dotenv()
@@ -22,7 +24,7 @@ PLATFORM_TO_CONTINENT = {
     "oc1": "sea",
 }
 
-_sem = asyncio.Semaphore(5)
+_sem = asyncio.Semaphore(15)
 
 
 # ---------------------------------------------------------------------------
@@ -137,14 +139,14 @@ async def _fetch_summoner(http, puuid: str, platform: str) -> dict | None:
     return await _get(http, f"https://{platform}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}")
 
 
-async def _fetch_rank(http, summoner_id: str, platform: str) -> dict | None:
-    data = await _get(http, f"https://{platform}.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_id}")
+async def _fetch_rank(http, puuid: str, platform: str) -> dict | None:
+    data = await _get(http, f"https://{platform}.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}")
     if not data:
         return None
     return next((e for e in data if e.get("queueType") == "RANKED_SOLO_5x5"), None)
 
 
-async def _fetch_match_ids(http, puuid: str, platform: str, count: int = 20) -> list[str]:
+async def _fetch_match_ids(http, puuid: str, platform: str, count: int = 100) -> list[str]:
     continent = PLATFORM_TO_CONTINENT.get(platform.lower(), "americas")
     data = await _get(http, f"https://{continent}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?queue=420&count={count}")
     return data if isinstance(data, list) else []
@@ -218,7 +220,7 @@ def _build_champion_pool(matches: list[MatchSummary]) -> list[ChampionStats]:
 
 async def scan_player(game_name: str, tag_line: str, platform: str = "na1") -> dict:
     """
-    Fetch a player's full profile, last 20 ranked matches, and champion pool.
+    Fetch a player's full profile, last 100 ranked matches, and champion pool.
     All data is fetched on-demand from Riot API — nothing stored in DB.
     """
     async with aiohttp.ClientSession() as http:
@@ -228,18 +230,16 @@ async def scan_player(game_name: str, tag_line: str, platform: str = "na1") -> d
 
         puuid = account["puuid"]
 
-        # Parallel: summoner data, match IDs, DDragon version
-        summoner, match_ids, ddragon_version = await asyncio.gather(
+        # All four fetches in parallel — rank now uses PUUID directly
+        summoner, match_ids, ddragon_version, rank_data = await asyncio.gather(
             _fetch_summoner(http, puuid, platform),
             _fetch_match_ids(http, puuid, platform),
             _latest_ddragon_version(http),
+            _fetch_rank(http, puuid, platform),
         )
 
         if not summoner:
             return {"error": "Could not fetch summoner data."}
-
-        # Rank needs summoner ID — one sequential step
-        rank_data = await _fetch_rank(http, summoner["id"], platform)
 
         # Build profile
         icon_id = summoner.get("profileIconId", 0)
@@ -308,6 +308,7 @@ async def get_per_minute_comparison(
     platform: str = "na1",
     role: str | None = None,
     champion: str | None = None,
+    ranks: list[str] | None = None,
 ) -> list[PerMinuteSnapshot]:
     """
     Fetch timelines for filtered matches, average the player's per-minute stats,
@@ -330,7 +331,7 @@ async def get_per_minute_comparison(
         if not timeline:
             continue
         match_id = timeline["metadata"]["matchId"]
-        for s in extract_snapshots(timeline, match_id):
+        for s in extract_snapshots(timeline, match_id, minutes=_EVERY_MINUTE):
             if s["puuid"] != puuid:
                 continue
             t = s["timestamp_minute"]
@@ -338,8 +339,8 @@ async def get_per_minute_comparison(
                 sums[t][key] += s.get(key) or 0
             sums[t]["count"] += 1
 
-    # Fetch Master+ benchmark from Neon
-    benchmark = await get_benchmark(role=role, champion=champion)
+    # Fetch benchmark from Neon, filtered by selected rank tiers
+    benchmark = await get_benchmark(role=role, champion=champion, ranks=ranks)
 
     results = []
     for minute in sorted(sums):
