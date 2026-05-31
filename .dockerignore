@@ -1,0 +1,15 @@
+myenv/
+frontend/
+.env
+.env.*
+__pycache__/
+*.pyc
+*.pyo
+data/
+.github/
+.git/
+*.md
+pipeline.py
+test_scanner.py
+requirements.txt
+requirements-pipeline.txt
